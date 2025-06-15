@@ -103,13 +103,13 @@ TranslationDataVal = TranslationData[6400 : 7200] # 10% Validation Data
 TranslationDataTest = TranslationData[7200 : 8000] # 10% Test Data
 
 # Converting into Json File
-def convert_to_json(type, value):
+def convert_to_json_trans(type, value):
     with open(f"NeuroFormer/data/raw/Translation Data/{type}.json", "w", encoding="utf-8") as f:
         json.dump(value, f, indent=2, ensure_ascii=False)
 
-convert_to_json('train', TranslationDataTrain)
-convert_to_json('valid', TranslationDataVal)
-convert_to_json('test', TranslationDataTest)
+convert_to_json_trans('train', TranslationDataTrain)
+convert_to_json_trans('valid', TranslationDataVal)
+convert_to_json_trans('test', TranslationDataTest)
 
 
 # Formatting QuesAnsData into Json Format
@@ -135,10 +135,10 @@ QuesAnsDataTrain = QuesAnsData[ : 3200] # 80% Train Data
 QuesAnsDataVal = QuesAnsData[3200 : 3600] # 10% Validation Data 
 QuesAnsDataTest = QuesAnsData[3600: 4000] # 10% Test Data
 
-def convert_to_json(type, value):
+def convert_to_json_qa(type, value):
     with open(f"NeuroFormer/data/raw/QuesAns Data/{type}.json", "w", encoding="utf-8") as f:
         json.dump(value, f, indent=2, ensure_ascii=False)
 
-convert_to_json('train', QuesAnsDataTrain)
-convert_to_json('valid', QuesAnsDataVal)
-convert_to_json('test', QuesAnsDataTest)
+convert_to_json_qa('train', QuesAnsDataTrain)
+convert_to_json_qa('valid', QuesAnsDataVal)
+convert_to_json_qa('test', QuesAnsDataTest)

@@ -58,8 +58,8 @@ class Tokenizer:
                     return_tensors = 'pt' 
                 )
                 tokenized_data.append({
-                    'input_ids' : tokens['input_ids'].squeeze(),
-                    'attention_mask' : tokens['attention_mask'].squeeze()
+                    'input_ids' : tokens['input_ids'].squeeze(0),
+                    'attention_mask' : tokens['attention_mask'].squeeze(0)
                 })
             
         torch.save(tokenized_data, output_path)
@@ -88,8 +88,8 @@ class Tokenizer:
                         return_tensors = 'pt'
                     )
                     tokenized_data.append({
-                        'input_ids' : tokens['input_ids'].squeeze(),
-                        'attention_mask' : tokens['attention_mask'].squeeze()
+                        'input_ids' : tokens['input_ids'].squeeze(0),
+                        'attention_mask' : tokens['attention_mask'].squeeze(0)
                     })
             
             torch.save(tokenized_data, output_path)
@@ -133,10 +133,10 @@ class Tokenizer:
                 )
                 
                 tokenized_data.append({
-                'input_ids': input_tokens['input_ids'].squeeze(),
-                'attention_mask': input_tokens['attention_mask'].squeeze(),
-                'answer_ids': answer_tokens['input_ids'].squeeze(),
-                'answer_mask': answer_tokens['attention_mask'].squeeze()
+                'input_ids': input_tokens['input_ids'].squeeze(0),
+                'attention_mask': input_tokens['attention_mask'].squeeze(0),
+                'answer_ids': answer_tokens['input_ids'].squeeze(0),
+                'answer_mask': answer_tokens['attention_mask'].squeeze(0)
                 })
                 
             torch.save(tokenized_data, output_path)
@@ -181,10 +181,10 @@ class Tokenizer:
                 )
                 
                 tokenized_data.append({
-                'input_ids': source_tokens['input_ids'].squeeze(),
-                'attention_mask': source_tokens['attention_mask'].squeeze(),
-                'labels': target_tokens['input_ids'].squeeze(),
-                'decoder_attention_mask': target_tokens['attention_mask'].squeeze()
+                'input_ids': source_tokens['input_ids'].squeeze(0),
+                'attention_mask': source_tokens['attention_mask'].squeeze(0),
+                'labels': target_tokens['input_ids'].squeeze(0),
+                'decoder_attention_mask': target_tokens['attention_mask'].squeeze(0)
                 })
             
             torch.save(tokenized_data, output_path)
@@ -212,7 +212,7 @@ print(f"Encoded Chatbot Input: {encoded_chat}")
 decoded_chat = tokenizer.decode_chatbot_output(encoded_chat[0])
 print(f"Decoded Chatbot Output: {decoded_chat}")  
 
-encoded_qa = tokenizer.encode_qa_input("<question> What is AI?", "<context> AI is artificial intelligence.")
+encoded_qa = tokenizer.encode_qa_input("<context> AI is artificial intelligence.", "<question> What is AI?")
 print(f"Encoded QuesAns Input: {encoded_qa}")
 decoded_qa = tokenizer.decode_qa_output(encoded_qa[0])
 print(f"Decoded Chatbot Output: {decoded_qa}")
