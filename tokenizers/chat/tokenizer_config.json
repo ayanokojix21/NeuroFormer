@@ -1,16 +1,6 @@
 {
-  "add_bos_token": false,
-  "add_prefix_space": false,
   "added_tokens_decoder": {
-    "50256": {
-      "content": "<|endoftext|>",
-      "lstrip": false,
-      "normalized": true,
-      "rstrip": false,
-      "single_word": false,
-      "special": true
-    },
-    "50257": {
+    "0": {
       "content": "<pad>",
       "lstrip": false,
       "normalized": false,
@@ -18,23 +8,31 @@
       "single_word": false,
       "special": true
     },
-    "50258": {
-      "content": "<bos>",
+    "1": {
+      "content": "<s>",
       "lstrip": false,
       "normalized": false,
       "rstrip": false,
       "single_word": false,
       "special": true
     },
-    "50259": {
-      "content": "<eos>",
+    "2": {
+      "content": "</s>",
       "lstrip": false,
       "normalized": false,
       "rstrip": false,
       "single_word": false,
       "special": true
     },
-    "50260": {
+    "3": {
+      "content": "<unk>",
+      "lstrip": false,
+      "normalized": false,
+      "rstrip": false,
+      "single_word": false,
+      "special": true
+    },
+    "4": {
       "content": "<user>",
       "lstrip": false,
       "normalized": false,
@@ -42,7 +40,7 @@
       "single_word": false,
       "special": true
     },
-    "50261": {
+    "5": {
       "content": "<assistant>",
       "lstrip": false,
       "normalized": false,
@@ -55,13 +53,12 @@
     "<user>",
     "<assistant>"
   ],
-  "bos_token": "<bos>",
+  "bos_token": "<s>",
   "clean_up_tokenization_spaces": false,
-  "eos_token": "<eos>",
-  "errors": "replace",
+  "eos_token": "</s>",
   "extra_special_tokens": {},
-  "model_max_length": 1024,
+  "model_max_length": 1000000000000000019884624838656,
   "pad_token": "<pad>",
-  "tokenizer_class": "GPT2Tokenizer",
-  "unk_token": "<|endoftext|>"
+  "tokenizer_class": "PreTrainedTokenizer",
+  "unk_token": "<unk>"
 }

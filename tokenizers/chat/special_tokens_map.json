@@ -16,14 +16,14 @@
     }
   ],
   "bos_token": {
-    "content": "<bos>",
+    "content": "<s>",
     "lstrip": false,
     "normalized": false,
     "rstrip": false,
     "single_word": false
   },
   "eos_token": {
-    "content": "<eos>",
+    "content": "</s>",
     "lstrip": false,
     "normalized": false,
     "rstrip": false,
@@ -37,9 +37,9 @@
     "single_word": false
   },
   "unk_token": {
-    "content": "<|endoftext|>",
+    "content": "<unk>",
     "lstrip": false,
-    "normalized": true,
+    "normalized": false,
     "rstrip": false,
     "single_word": false
   }
