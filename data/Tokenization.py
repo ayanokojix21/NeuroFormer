@@ -243,6 +243,7 @@ class Tokenizer:
 
                 labels_tensor = target_tokens['input_ids'].squeeze(0)
                 labels_tensor[labels_tensor == self.trans_tokenizer.pad_token_id] = -100
+                labels_tensor = torch.clamp(labels_tensor, min=-100, max=self.trans_tokenizer.vocab_size - 1)
                 
                 input_ids.append(source_tokens['input_ids'].squeeze(0))
                 attention_mask.append(source_tokens['attention_mask'].squeeze(0))
