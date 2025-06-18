@@ -3,7 +3,6 @@ from datasets import load_dataset
 from dotenv import load_dotenv
 import os
 import re 
-import json
 
 load_dotenv()
 
@@ -17,7 +16,7 @@ TranslationData = load_dataset("Aarif1430/english-to-hindi", token=token) # Used
 QuesAnsData = load_dataset("rajpurkar/squad", token=token) # Used For Fine-Tuning Encoder-Only Model
 
 # Cleaning Raw Data for Language Modelling
-def clean_line(line: str) -> str:
+def clean_line(line):
     line = line.strip()
 
     if not line:
@@ -38,7 +37,7 @@ def clean_line(line: str) -> str:
     if lower_line.startswith(("category:", "thumb", "special:", "help:", "user:")):
         return ""
 
-    if len(line.split()) < 4: # Removing Short Lines
+    if len(line.split()) < 50: # Removing Short Lines
         return ""
     
     # Removing MetaData from Lines
@@ -47,7 +46,7 @@ def clean_line(line: str) -> str:
 
     return line
 
-# Putting Cleaned Lines in a list to store them for tokenization
+# Putting Cleaned Lines in a list to store them for tokenization training
 cleaned_lines = []
 for split in ['train', 'validation', 'test']:
     for x in LMData[split]:
@@ -55,90 +54,78 @@ for split in ['train', 'validation', 'test']:
         if cleaned:
             cleaned_lines.append(cleaned)
 
+# Splitting the lines in Train And Validation set
+LMData = cleaned_lines
+split = int(len(cleaned_lines) * 0.9)
+LMDataTrain = LMData[ : split]
+LMDataVal = LMData[split : ]
+
 # Saving Cleaned Lines for Language Modelling
-with open("NeuroFormer/data/raw/Language Modelling/train.txt", "w", encoding="utf-8") as f:
-    for line in cleaned_lines:
-        f.write(line + "\n")
+def format_lm_data(type, value):
+    with open(f"NeuroFormer/data/raw/Language Modelling/{type}.txt", "w", encoding="utf-8") as f:
+        for line in value:
+            f.write(line + "\n")
+            
+format_lm_data('train', LMDataTrain)
+format_lm_data('valid', LMDataVal)
 
-# Converting the Dialogs in a Single Line 
-def flatten_conversation(dialog, user_token="<user>", assistant_token="<assistant>"):
-    result = ""
-    for i, line in enumerate(dialog):
-        speaker = user_token if i % 2 == 0 else assistant_token
-        result += f"{speaker} {line.strip()}\n"
-    return result.strip()
-
-ChatData = ChatData["train"]["dialog"]
-ChatDataTrain = ChatData[ : 3200] # 80% Train Data
-ChatDataVal = ChatData[3200 : 3600] # 10% Validation Data
-ChatDataTest = ChatData[3600 : 4000] # 10% Test Data 
-
-# Saving Lines for Fine-Tuning
+# Saving Chatbot Data in txt format 
 def format_chat_data(type, value):
     with open(f"NeuroFormer/data/raw/Chatbot Data/{type}.txt", "w", encoding="utf-8") as f:
         for dialog in value:
-            flat = flatten_conversation(dialog)
-            f.write(flat + "\n\n")  # blank line between dialogs
+            for i, utterance in enumerate(dialog):
+                speaker_tag = "<user>" if i % 2 == 0 else "<assistant>"
+                f.write(f"{speaker_tag} {utterance.strip()}\n")
+            f.write("\n")  # Blank line to separate dialogs
+
+# Splitting Dataset into Train, Validation, Test set
+ChatDataTrain = ChatData["train"]["dialog"] # 80% Train Data
+ChatDataVal = ChatData["validation"]["dialog"] # 10% Validation Data
+ChatDataTest = ChatData["test"]["dialog"] # 10% Test Data 
 
 format_chat_data('train', ChatDataTrain)
 format_chat_data('valid', ChatDataVal)
 format_chat_data('test', ChatDataTest)
 
-# Formatting Translation Data in Json Format
-def format_translation_data():
-    formatted_data = []
-    for sample in TranslationData['train']:
-        en = sample["english_sentence"].strip()
-        hi = sample["hindi_sentence"].strip()
-        if en and hi:
-            formatted_data.append({
-                "source": en,
-                "target": hi
-            })
-    return formatted_data
+# Saving Translation Data into txt format
+def format_translation_txt(type, value):
+    with open(f"NeuroFormer/data/raw/Translation Data/{type}.txt", "w", encoding="utf-8") as f:
+        for sample in value:
+            en = sample["english_sentence"].strip()
+            hi = sample["hindi_sentence"].strip()
+            if en and hi:
+                f.write(f"<src> {en}\n")
+                f.write(f"<tgt> {hi}\n\n")
 
-TranslationData = format_translation_data()
-TranslationDataTrain = TranslationData[ : 6400] # 80% Train Data
-TranslationDataVal = TranslationData[6400 : 7200] # 10% Validation Data
-TranslationDataTest = TranslationData[7200 : 8000] # 10% Test Data
+# Splitting Dataset into Train, Validation, Test set
+TranslationData = [s for s in TranslationData['train'] if s["english_sentence"].strip() and s["hindi_sentence"].strip()]
+TranslationDataTrain = TranslationData[:16000] # 80% Train Data
+TranslationDataVal = TranslationData[16000:18000] # 10% Validation Data
+TranslationDataTest = TranslationData[18000:20000] # 10% Validation Data
 
-# Converting into Json File
-def convert_to_json_trans(type, value):
-    with open(f"NeuroFormer/data/raw/Translation Data/{type}.json", "w", encoding="utf-8") as f:
-        json.dump(value, f, indent=2, ensure_ascii=False)
+format_translation_txt('train', TranslationDataTrain)
+format_translation_txt('valid', TranslationDataVal)
+format_translation_txt('test', TranslationDataTest)
 
-convert_to_json_trans('train', TranslationDataTrain)
-convert_to_json_trans('valid', TranslationDataVal)
-convert_to_json_trans('test', TranslationDataTest)
+# Saving QA Data in txt format 
+def format_qa_txt(type, value):
+    with open(f"NeuroFormer/data/raw/QuesAns Data/{type}.txt", "w", encoding="utf-8") as f:
+        for sample in value:
+            context = sample["context"].strip()
+            question = sample["question"].strip()
+            answers = sample["answers"]["text"]
+            if context and question and answers:
+                answer = answers[0].strip()
+                f.write(f"<context> {context}\n")
+                f.write(f"<question> {question}\n")
+                f.write(f"<answer> {answer}\n\n")
 
+# Splitting Dataset into Train, Validation, Test set
+QuesAns = [s for s in QuesAnsData['train'] if s["context"].strip() and s["question"].strip() and s["answers"]["text"]]
+QuesAnsDataTrain = QuesAns[:16000] # 80% Train Data
+QuesAnsDataVal = QuesAns[16000:18000] # 10% Validation Data
+QuesAnsDataTest = QuesAns[18000:20000] # 10% Test Data
 
-# Formatting QuesAnsData into Json Format
-def formatting_qa_data():
-    formatted_data = []
-    for sample in QuesAnsData['train']:
-        context = sample["context"].strip()
-        question = sample["question"].strip()
-        answers = sample["answers"]["text"]
-        
-        # Use first answer only (for simplicity)
-        if context and question and answers:
-            formatted_data.append({
-                "context": context,
-                "question": question,
-                "answer": answers[0].strip()
-            })
-    
-    return formatted_data
-
-QuesAnsData = formatting_qa_data()
-QuesAnsDataTrain = QuesAnsData[ : 3200] # 80% Train Data 
-QuesAnsDataVal = QuesAnsData[3200 : 3600] # 10% Validation Data 
-QuesAnsDataTest = QuesAnsData[3600: 4000] # 10% Test Data
-
-def convert_to_json_qa(type, value):
-    with open(f"NeuroFormer/data/raw/QuesAns Data/{type}.json", "w", encoding="utf-8") as f:
-        json.dump(value, f, indent=2, ensure_ascii=False)
-
-convert_to_json_qa('train', QuesAnsDataTrain)
-convert_to_json_qa('valid', QuesAnsDataVal)
-convert_to_json_qa('test', QuesAnsDataTest)
+format_qa_txt('train', QuesAnsDataTrain)
+format_qa_txt('valid', QuesAnsDataVal)
+format_qa_txt('test', QuesAnsDataTest)
