@@ -9,17 +9,17 @@ class QADataset(Dataset):
         self.data = torch.load(path)
         
     def __len__(self):
-        return len(self.data)
+        return len(self.data['input_ids'])
     
     def __getitem__(self, idx):
-        return{
-            'input_ids' : self.data[idx]['input_ids'],
-            'attention_mask' : self.data[idx]['attention_mask'],
-            'answer_ids' : self.data[idx]['answer_ids'],
-            'answer_mask' : self.data[idx]['answer_mask']
+        return {
+            'input_ids': self.data['input_ids'][idx],
+            'attention_mask': self.data['attention_mask'][idx],
+            'start_idx': self.data['start_idx'][idx],
+            'end_idx': self.data['end_idx'][idx]
         }
             
 # Defining DataLoader Function to load dataset
-def get_qa_dataloader(path, batch_size=4, shuffle=True, num_workers=2, pin_memory=True):
+def get_qa_dataloader(path, batch_size=4, shuffle=True):
     dataset = QADataset(path)
-    return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, pin_memory=pin_memory)
+    return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
