@@ -15,7 +15,7 @@ lm_tokenizer.normalizer = normalizers.NFKC()
 lm_tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=True)
 
 lm_trainer = trainers.BpeTrainer(
-    vocab_size=8000, # Setting Vocab Size of 8000 for LM Tokenizer
+    vocab_size=16000, # Setting Vocab Size of 16000 for LM Tokenizer
     min_frequency=3,
     special_tokens=["<pad>", "<s>", "</s>", "<unk>"]
 )
