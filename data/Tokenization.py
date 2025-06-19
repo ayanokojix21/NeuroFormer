@@ -31,7 +31,7 @@ class Tokenizer:
             for line in lines:
                 line = line.strip()
                 if len(line) > 10:
-                    line = f"<s> {line} </s>"
+                    line = line.strip()
                     tokens = self.lm_tokenizer(
                         line,
                         max_length = 256,
@@ -66,7 +66,7 @@ class Tokenizer:
             
             for conv in conversations:
                 if len(conv) > 20:
-                    conv = f"<s> {conv.strip()} </s>"
+                    conv = conv.strip()
                     tokens = self.chat_tokenizer(
                         conv,
                         max_length = 256,

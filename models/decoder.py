@@ -27,18 +27,18 @@ class Decoder(nn.Module):
 
     self.out = nn.Linear(d_model, vocab_size) # Final Linear Layer for Predicting Probablities
 
-  def forward(self, input_ids):
+  def forward(self, input_ids, attention_mask=None):
 
     seq_len = input_ids.size(1)
 
     # Creating masks
-    pad_mask_tensor = pad_mask(input_ids, self.pad_token)
     causal = causal_mask(seq_len, input_ids.device)
-
-    # Combine masks for self-attention
-    padding_expanded = pad_mask_tensor.expand(-1, -1, seq_len, -1)
-    padding_self_attn = padding_expanded & padding_expanded.transpose(-1, -2)
-    combined_mask = combine_masks(causal, padding_self_attn)
+    
+    if attention_mask is not None:
+      attn_mask = attention_mask.unsqueeze(1).unsqueeze(1).bool()
+      mask = causal & attn_mask
+    else:
+      mask = causal
 
     # Embedding + Positional Encoding
     y = self.embedding(input_ids) * math.sqrt(self.d_model) # sqrt(d_model) is multiplied to Stabilize Variance as nn.Embedding generate number between 0 and 1
@@ -46,7 +46,7 @@ class Decoder(nn.Module):
 
     # Passing Through Multiple Decoder Layers (No Cross Attention)
     for layer in self.layers:
-      y = layer(y, encoder_output=None, self_mask=combined_mask)
+      y = layer(y, encoder_output=None, self_mask=mask)
 
     logits = self.out(y)
     return logits
