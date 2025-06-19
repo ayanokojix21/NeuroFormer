@@ -17,6 +17,7 @@ class Decoder(nn.Module):
 
     # Embeddings
     self.embedding = nn.Embedding(vocab_size, d_model) # Input Embedding
+    nn.init.normal_(self.embedding.weight, mean=0.0, std=0.02)
     self.pos_enc = PositionalEncoding(sequence_length, d_model, drop_prob) # Positional Encoding
 
     self.layers = nn.ModuleList([

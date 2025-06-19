@@ -79,8 +79,8 @@ def scaled_dot_product_attention(q, k, v, mask = None):
   if mask is not None:
     # Convert boolean mask to additive mask (-inf for False positions)
     scaled = scaled.masked_fill(~mask , float('-inf')) # After Broadcasting: [B, num_heads, T, T]
-
-  scaled = scaled - scaled.max(dim=-1, keepdim=True)[0]  # subtract max before softmax [B, num_heads, T, T]
+    
+  scaled = scaled.clamp(min=-1e9, max=1e9)
   attention = F.softmax(scaled, dim=-1) # attention: [B, num_heads, T, T]
   values = torch.matmul(attention, v) # v: [B, num_heads, T, head_dim] , Values: [B, num_heads, T, head_dim]
 
