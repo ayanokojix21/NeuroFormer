@@ -12,8 +12,6 @@ token = os.getenv("HF_TOKEN")
 # Loading the Datasets for different tasks
 LMData = load_dataset("Salesforce/wikitext", "wikitext-2-raw-v1", token=token) # Used for Language Modelling the Decoder-Only Model
 ChatData = load_dataset("li2017dailydialog/daily_dialog", trust_remote_code=True, token=token) # Used for Fine-Tuning the Decoder-Only Model
-TranslationData = load_dataset("Aarif1430/english-to-hindi", token=token) # Used For Fine-Tuning Encoder-Decoder Model
-QuesAnsData = load_dataset("rajpurkar/squad", token=token) # Used For Fine-Tuning Encoder-Only Model
 
 # Cleaning Raw Data for Language Modelling
 def clean_line(line):
@@ -86,46 +84,3 @@ ChatDataTest = ChatData["test"]["dialog"] # 10% Test Data
 format_chat_data('train', ChatDataTrain)
 format_chat_data('valid', ChatDataVal)
 format_chat_data('test', ChatDataTest)
-
-# Saving Translation Data into txt format
-def format_translation_txt(type, value):
-    with open(f"NeuroFormer/data/raw/Translation Data/{type}.txt", "w", encoding="utf-8") as f:
-        for sample in value:
-            en = sample["english_sentence"].strip()
-            hi = sample["hindi_sentence"].strip()
-            if en and hi:
-                f.write(f"<src> {en}\n")
-                f.write(f"<tgt> {hi}\n\n")
-
-# Splitting Dataset into Train, Validation, Test set
-TranslationData = [s for s in TranslationData['train'] if s["english_sentence"].strip() and s["hindi_sentence"].strip()]
-TranslationDataTrain = TranslationData[:16000] # 80% Train Data
-TranslationDataVal = TranslationData[16000:18000] # 10% Validation Data
-TranslationDataTest = TranslationData[18000:20000] # 10% Validation Data
-
-format_translation_txt('train', TranslationDataTrain)
-format_translation_txt('valid', TranslationDataVal)
-format_translation_txt('test', TranslationDataTest)
-
-# Saving QA Data in txt format 
-def format_qa_txt(type, value):
-    with open(f"NeuroFormer/data/raw/QuesAns Data/{type}.txt", "w", encoding="utf-8") as f:
-        for sample in value:
-            context = sample["context"].strip()
-            question = sample["question"].strip()
-            answers = sample["answers"]["text"]
-            if context and question and answers:
-                answer = answers[0].strip()
-                f.write(f"<context> {context}\n")
-                f.write(f"<question> {question}\n")
-                f.write(f"<answer> {answer}\n\n")
-
-# Splitting Dataset into Train, Validation, Test set
-QuesAns = [s for s in QuesAnsData['train'] if s["context"].strip() and s["question"].strip() and s["answers"]["text"]]
-QuesAnsDataTrain = QuesAns[:16000] # 80% Train Data
-QuesAnsDataVal = QuesAns[16000:18000] # 10% Validation Data
-QuesAnsDataTest = QuesAns[18000:20000] # 10% Test Data
-
-format_qa_txt('train', QuesAnsDataTrain)
-format_qa_txt('valid', QuesAnsDataVal)
-format_qa_txt('test', QuesAnsDataTest)
