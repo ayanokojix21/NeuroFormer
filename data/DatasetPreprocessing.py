@@ -1,8 +1,9 @@
 # Importing Libraries
 from datasets import load_dataset
 from dotenv import load_dotenv
+import kagglehub
 import os
-import re 
+import random
 
 load_dotenv()
 
@@ -10,62 +11,36 @@ load_dotenv()
 token = os.getenv("HF_TOKEN")
 
 # Loading the Datasets for different tasks
-LMData = load_dataset("Salesforce/wikitext", "wikitext-2-raw-v1", token=token) # Used for Language Modelling the Decoder-Only Model
+LMData = kagglehub.dataset_download("rtatman/state-of-the-union-corpus-1989-2017") # Used for Language Modelling the Decoder-Only Model
 ChatData = load_dataset("li2017dailydialog/daily_dialog", trust_remote_code=True, token=token) # Used for Fine-Tuning the Decoder-Only Model
 
-# Cleaning Raw Data for Language Modelling
-def clean_line(line):
-    line = line.strip()
+# Combining Language Modelling Data
+data = []
+for filename in os.listdir(LMData):
+    if filename.endswith('.txt'):
+        with open(os.path.join(LMData, filename), "r", encoding="utf-8") as file:
+            text = file.read().strip()
+            if text:
+                data.append(text)
+                
+# Shuffling Data for Generalization
+random.shuffle(data)
 
-    if not line:
-        return ""
-    
-    # Normalizing to lowercase for metadata filtering
-    lower_line = line.lower()
+split_idx = int(0.9 * len(data))
+train_data = data[:split_idx]
+valid_data = data[split_idx:]
 
-    if re.match(r"^=+\s?.*?\s?=+$", line):  # Removing Wikipedia Headers
-        return ""
- 
-    if line.startswith(("[[", "{{", "'''", "```", "File:", "Image:")): 
-        return ""
+# Combine into text
+LMDataTrain = "\n\n".join(train_data) # 90% Train Data
+LMDataValid = "\n\n".join(valid_data) # 10% Valid Data
 
-    if re.match(r"^\[https?://", line) or "http" in line: # Removing Website Headers
-        return ""
-
-    if lower_line.startswith(("category:", "thumb", "special:", "help:", "user:")):
-        return ""
-
-    if len(line.split()) < 50: # Removing Short Lines
-        return ""
-    
-    # Removing MetaData from Lines
-    line = re.sub(r"[\*\[\]{}<>\\|@#]", "", line)
-    line = re.sub(r"\s+", " ", line)
-
-    return line
-
-# Putting Cleaned Lines in a list to store them for tokenization training
-cleaned_lines = []
-for split in ['train', 'validation', 'test']:
-    for x in LMData[split]:
-        cleaned = clean_line(x['text'])
-        if cleaned:
-            cleaned_lines.append(cleaned)
-
-# Splitting the lines in Train And Validation set
-LMData = cleaned_lines
-split = int(len(cleaned_lines) * 0.9)
-LMDataTrain = LMData[ : split]
-LMDataVal = LMData[split : ]
-
-# Saving Cleaned Lines for Language Modelling
+# Saving Language Modelling Data
 def format_lm_data(type, value):
-    with open(f"NeuroFormer/data/raw/Language Modelling/{type}.txt", "w", encoding="utf-8") as f:
-        for line in value:
-            f.write(line + "\n")
-            
+    with open(f'NeuroFormer/data/raw/Language Modelling/{type}.txt', 'w', encoding='utf-8') as f:
+        f.write(value)
+
 format_lm_data('train', LMDataTrain)
-format_lm_data('valid', LMDataVal)
+format_lm_data('valid', LMDataValid)
 
 # Saving Chatbot Data in txt format 
 def format_chat_data(type, value):
