@@ -1,104 +1,46 @@
-# Importing Libraries
 import torch
-from transformers import PreTrainedTokenizerFast
+import json
 
-# Tokenizers Path
-tokenizer_path = 'NeuroFormer/tokenizers/tokenizer'
-
-# A Simple Tokenizer Class that handles Decoder-Only tasks
-class Tokenizer:
+# Function to build vocabulary based on char level tokenization
+def build_vocab(text):
     
-    def __init__(self):
-        
-        # Initializing all Tokenizers
-        self.tokenizer = PreTrainedTokenizerFast.from_pretrained(tokenizer_path)
-        
-    # Tokenizing Language Modelling Data
-    def tokenize_lm(self):
-        
-        for split in ['train', 'valid']:
-        
-            input_path = f"NeuroFormer/data/raw/Language Modelling/{split}.txt"
-            output_path = f"NeuroFormer/data/tokenized/Language Modelling/{split}.pt"
-            input_ids = []
-            attention_mask = []
-            
-            with open(input_path, 'r', encoding='utf-8') as f:
-                lines = f.read().splitlines()
-                
-            for line in lines:
-                line = line.strip()
-                if len(line) > 10:
-                    line = line.strip()
-                    tokens = self.tokenizer(
-                        line,
-                        max_length = 256,
-                        padding = 'max_length',
-                        truncation = True,
-                        return_tensors = 'pt' 
-                    )
-                    
-                    input_ids.append(tokens['input_ids'].squeeze(0))
-                    attention_mask.append(tokens['attention_mask'].squeeze(0))
-                    
-            tokenized_data = {
-                'input_ids' : torch.stack(input_ids),
-                'attention_mask' : torch.stack(attention_mask)
-            }
-                    
-            torch.save(tokenized_data, output_path)
-            print(f"saved {len(input_ids)} Language Modelling {split} Samples")
-            
-    # Tokenizing Chatbot Data
-    def tokenize_chatbot_data(self):
-        
-        for split in ['train', 'valid', 'test']:
-            
-            input_path = f"NeuroFormer/data/raw/Chatbot Data/{split}.txt"
-            output_path = f"NeuroFormer/data/tokenized/Chatbot Data/{split}.pt"
-            input_ids = []
-            attention_mask = []
-            
-            with open(input_path, 'r', encoding='utf-8') as f:
-                conversations = f.read().strip().split('\n\n')
-            
-            for conv in conversations:
-                if len(conv) > 20:
-                    conv = conv.strip()
-                    tokens = self.tokenizer(
-                        conv,
-                        max_length = 256,
-                        padding = 'max_length',
-                        truncation = True,
-                        return_tensors = 'pt'
-                    )
-                    
-                    input_ids.append(tokens['input_ids'].squeeze(0))
-                    attention_mask.append(tokens['attention_mask'].squeeze(0))
-                    
-            tokenized_data = {
-                'input_ids' : torch.stack(input_ids),
-                'attention_mask' : torch.stack(attention_mask)
-            }
-            
-            torch.save(tokenized_data, output_path)
-            print(f"saved {len(input_ids)} Chatbot {split} Samples")
+    chars = sorted(list(set(text)))
+    vocab = {ch: i for i, ch in enumerate(chars)}
+    ivocab = {i: ch for ch, i in vocab.items()}
     
-    def encode(self, text, add_special_tokens=True):
-        return self.tokenizer(text, return_tensors='pt', add_special_tokens=add_special_tokens)
+    return vocab, ivocab
 
-    def decode(self, token_ids):
-        return self.tokenizer.decode(token_ids, skip_special_tokens=True).strip().replace("Ġ", " ")
+# Loading Training Data
+with open('NeuroFormer/data/raw/train.txt', 'r', encoding='utf-8') as f:
+    train_data = f.read()
     
-    def tokenize_all(self):
-        print('Tokenization Started')
-        self.tokenize_lm()
-        self.tokenize_chatbot_data()
-        print('Tokenization Done')
-        
-tokenizer = Tokenizer()
-tokenizer.tokenize_all()
+# Loading Validation Data
+with open('NeuroFormer/data/raw/valid.txt', 'r', encoding='utf-8') as f:
+    valid_data = f.read()
+    
+data = train_data + valid_data # Combining both dataset for building vocabulary
+char2idx, idx2char = build_vocab(data) 
+vocab_size = len(char2idx) # Size of vocabulary
+print(f'Vocab Size: {vocab_size}')
 
-encoded_chat = tokenizer.encode("<user> Hello! <assistant> Hi there!")
-decoded_chat = tokenizer.decode(encoded_chat['input_ids'][0])
-print(f"Decoded Chatbot Output: {decoded_chat}")  
+# Converting char to idx
+def encode(text, vocab):
+    return [vocab[c] for c in text]
+
+# Converting idx to char
+def decode(indices, ivocab):
+    return ''.join([ivocab[i] for i in indices])
+
+# Saving Tokenizers
+with open('NeuroFormer/tokenizer/char2idx.json', 'w') as f:
+    json.dump(char2idx, f)
+
+with open('NeuroFormer/tokenizer/idx2char.json', 'w') as f:
+    json.dump(idx2char, f)
+    
+# Saving tokenized data as .pt for faster loading
+train_ids = torch.tensor(encode(train_data, char2idx), dtype=torch.long)
+valid_ids = torch.tensor(encode(valid_data, char2idx), dtype=torch.long)
+
+torch.save(train_ids, 'NeuroFormer/data/tokenized/train.pt')
+torch.save(valid_ids, 'NeuroFormer/data/tokenized/valid.pt')

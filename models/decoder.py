@@ -27,18 +27,13 @@ class Decoder(nn.Module):
 
     self.out = nn.Linear(d_model, vocab_size) # Final Linear Layer for Predicting Probablities
 
-  def forward(self, input_ids, attention_mask=None):
+  def forward(self, input_ids):
 
     seq_len = input_ids.size(1)
 
-    # Creating masks
+    # Creating mask
     causal = causal_mask(seq_len, input_ids.device)
-    
-    if attention_mask is not None:
-      attn_mask = attention_mask.unsqueeze(1).unsqueeze(1).bool()
-      mask = causal & attn_mask
-    else:
-      mask = causal
+    mask = causal
 
     # Embedding + Positional Encoding
     y = self.embedding(input_ids) * math.sqrt(self.d_model) # sqrt(d_model) is multiplied to Stabilize Variance as nn.Embedding generate number between 0 and 1
