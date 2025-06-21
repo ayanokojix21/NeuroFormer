@@ -3,8 +3,7 @@ import torch
 from transformers import PreTrainedTokenizerFast
 
 # Tokenizers Path
-lm = 'NeuroFormer/tokenizers/lm/'
-chat = 'NeuroFormer/tokenizers/chat/'
+tokenizer_path = 'NeuroFormer/tokenizers/tokenizer'
 
 # A Simple Tokenizer Class that handles Decoder-Only tasks
 class Tokenizer:
@@ -12,8 +11,7 @@ class Tokenizer:
     def __init__(self):
         
         # Initializing all Tokenizers
-        self.lm_tokenizer = PreTrainedTokenizerFast.from_pretrained(lm)
-        self.chat_tokenizer = PreTrainedTokenizerFast.from_pretrained(chat)
+        self.tokenizer = PreTrainedTokenizerFast.from_pretrained(tokenizer_path)
         
     # Tokenizing Language Modelling Data
     def tokenize_lm(self):
@@ -32,7 +30,7 @@ class Tokenizer:
                 line = line.strip()
                 if len(line) > 10:
                     line = line.strip()
-                    tokens = self.lm_tokenizer(
+                    tokens = self.tokenizer(
                         line,
                         max_length = 256,
                         padding = 'max_length',
@@ -67,7 +65,7 @@ class Tokenizer:
             for conv in conversations:
                 if len(conv) > 20:
                     conv = conv.strip()
-                    tokens = self.chat_tokenizer(
+                    tokens = self.tokenizer(
                         conv,
                         max_length = 256,
                         padding = 'max_length',
@@ -86,18 +84,12 @@ class Tokenizer:
             torch.save(tokenized_data, output_path)
             print(f"saved {len(input_ids)} Chatbot {split} Samples")
     
-    def encode_chatbot_input(self, text):
-        return self.chat_tokenizer(
-            text,
-            return_tensors='pt',
-            padding='max_length',
-            truncation='longest_first',
-            max_length=256
-        )
+    def encode(self, text, add_special_tokens=True):
+        return self.tokenizer(text, return_tensors='pt', add_special_tokens=add_special_tokens)
+
+    def decode(self, token_ids):
+        return self.tokenizer.decode(token_ids, skip_special_tokens=True).strip().replace("Ġ", " ")
     
-    def decode_chatbot_output(self, tokens):
-        return self.chat_tokenizer.decode(tokens[0] if tokens.ndim > 1 else tokens, skip_special_tokens=True)
-            
     def tokenize_all(self):
         print('Tokenization Started')
         self.tokenize_lm()
@@ -107,6 +99,6 @@ class Tokenizer:
 tokenizer = Tokenizer()
 tokenizer.tokenize_all()
 
-encoded_chat = tokenizer.encode_chatbot_input("<user> Hello! <assistant> Hi there!")
-decoded_chat = tokenizer.decode_chatbot_output(encoded_chat['input_ids'][0])
+encoded_chat = tokenizer.encode("<user> Hello! <assistant> Hi there!")
+decoded_chat = tokenizer.decode(encoded_chat['input_ids'][0])
 print(f"Decoded Chatbot Output: {decoded_chat}")  
