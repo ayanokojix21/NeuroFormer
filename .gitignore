@@ -1,0 +1,12 @@
+.env
+
+__pycache__/
+*.pyc
+
+*.log
+*.tmp
+*.ini
+**/.tmp.drivedownload/
+**/.tmp.driveupload/
+
+venv/
